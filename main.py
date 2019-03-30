@@ -2,10 +2,10 @@ import pygame
 import random
 
 
-HEIGHT = 500
+HEIGHT = 650
 WIDTH = 1000
 
-ARR_COUNT = 100
+ARR_COUNT = 500
 
 BACKGROUND_COLOR = (0, 0, 0)
 TILE_COLOR = (255, 255, 255)
@@ -13,6 +13,26 @@ TILE_COLOR = (255, 255, 255)
 pygame.init()
 clock = pygame.time.Clock()
 canvas = pygame.display.set_mode((WIDTH, HEIGHT))
+
+def shuffle_sort_update(canvas, arr):
+    '''
+        This function will run the shuffle sort algorithm on the array, it will put the array in a random order
+        until it is sorted. it is very stupid. don't use it. It will also visualize the sorting of the array.
+        input:
+            the canvas, the array
+        output:
+            the sorted (?) array.
+    '''
+    flag = False
+    while not flag:
+        random.shuffle(arr)
+        update_canvas(canvas, arr)
+        flag = True
+        for i, val in enumerate(arr[:-1]):
+            if val > arr[i + 1]:
+                flag = False
+                break
+    return arr
 
 def insertion_sort_update(canvas, arr):    
     '''
@@ -91,6 +111,10 @@ def bubble_sort_update(canvas, arr):
                 flag = False
     return arr
 
+def substract_color(color1, color2):
+    return (color1[0] - color2[0], color1[1] - color2[1], color1[2] - color2[2])
+
+
 def update_canvas(canvas, arr):
     '''
         This function will draw a visualization of the array on the canvas. It will take each value in the array, draw it on
@@ -107,7 +131,12 @@ def update_canvas(canvas, arr):
     # This loop will go over each element in the list, and draw a box in the x grid of the index, and with a height of 
     # the element's value.
     for x, i in enumerate(arr):
-        pygame.draw.rect(canvas, TILE_COLOR, (x * box_width, HEIGHT - i, box_width, i), 0)
+        # Get a normalized version of the value of the element, max is 255, min is 0
+        normal_i = float(i) / HEIGHT * 255
+        # Change the color of the visual according to the value of the element.
+        subs_color = (normal_i, 0, normal_i)
+        rect_color = substract_color(TILE_COLOR, subs_color)
+        pygame.draw.rect(canvas, rect_color, (x * box_width, HEIGHT - i, box_width, i), 0)
 
     pygame.display.flip()
     event_list = pygame.event.get()
@@ -137,7 +166,8 @@ def main():
         algorithms with big random data.
     '''
     arr = initialize_array(ARR_COUNT, 1, HEIGHT)
-    insertion_sort_update(canvas, arr)
+    update_canvas(canvas, arr)
+    bubble_sort_update(canvas, arr)
     # After the array has been sorted, wait until the user wants to quit the program.
     while True:
         event_list = pygame.event.get()
