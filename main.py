@@ -1,11 +1,11 @@
 import pygame
 import random
-
+import math
 
 HEIGHT = 650
 WIDTH = 1000
 
-ARR_COUNT = 500
+ARR_COUNT = 1000
 
 BACKGROUND_COLOR = (0, 0, 0)
 TILE_COLOR = (255, 255, 255)
@@ -13,6 +13,62 @@ TILE_COLOR = (255, 255, 255)
 pygame.init()
 clock = pygame.time.Clock()
 canvas = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.event.set_allowed([pygame.QUIT])
+
+
+DISPLAY = True
+
+DISPLAY_BARS = False
+
+
+def quick_sort_update(canvas, arr):
+    '''
+        This function is just a wrapper for the function quicksort, to match the arguments of the 
+        regular sorting functions.
+        input:
+            the canvas, the array
+    '''
+    quickSort(canvas, arr, 0, len(arr) - 1)
+
+def partition(canvas, arr, start, end):
+    '''
+        This function will divide the given partition into two partitions - one which the elements are all bigger than
+        or equal to the pivot value, and one in which all values are less than the pivot value
+        input:
+            the canvas to draw on, the array, the start index, the end index.
+        output:
+            the pivot index
+    '''
+    pivIndex = start
+    pivValue = arr[end]
+    for i, value in enumerate(arr[:end]):
+        # Use only the range of the array between start to end.
+        if i < start:
+            continue
+        if value < pivValue:
+            arr[pivIndex], arr[i] = arr[i], arr[pivIndex]
+            pivIndex += 1
+            update_canvas(canvas, arr)
+    arr[pivIndex], arr[end] = arr[end], arr[pivIndex]
+    update_canvas(canvas, arr)
+    return pivIndex
+        
+
+def quickSort(canvas, arr, start, end):
+    '''
+        This function will sort the array with the quicksort algorithm. a divide - conquer algorithm thing
+        input:
+            the canvas to draw on, the array, the start index, the end index
+        output:
+            none
+        RECURSIVE!
+    '''
+    if start >= end:
+        return
+    div = partition(canvas, arr, start, end)
+    quickSort(canvas, arr, start, div - 1)
+    quickSort(canvas, arr, div + 1, end)
+
 
 def shuffle_sort_update(canvas, arr):
     '''
@@ -124,21 +180,31 @@ def update_canvas(canvas, arr):
         output:
             none
     '''
-    canvas.fill(BACKGROUND_COLOR)
-    # Calculate the width of each rectangle in the array, since we don't always want to have as many elements in the list
-    # As the width of the canvas.
-    box_width = int(WIDTH / len(arr))
-    # This loop will go over each element in the list, and draw a box in the x grid of the index, and with a height of 
-    # the element's value.
-    for x, i in enumerate(arr):
-        # Get a normalized version of the value of the element, max is 255, min is 0
-        normal_i = float(i) / HEIGHT * 255
-        # Change the color of the visual according to the value of the element.
-        subs_color = (normal_i, 0, normal_i)
-        rect_color = substract_color(TILE_COLOR, subs_color)
-        pygame.draw.rect(canvas, rect_color, (x * box_width, HEIGHT - i, box_width, i), 0)
-
-    pygame.display.flip()
+    if DISPLAY:    
+        canvas.fill(BACKGROUND_COLOR)
+        # Calculate the width of each rectangle in the array, since we don't always want to have as many elements in the list
+        # As the width of the canvas.
+        box_width = int(WIDTH / len(arr))
+        # We want to see what is the difference of angle between two objects, therefore we take a full rotation
+        # (2 * pi) and divide it by the number of elements in the array.
+        rotational_speed = 2 * math.pi / ARR_COUNT 
+        # This loop will go over each element in the list, and draw a box in the x grid of the index, and with a height of 
+        # the element's value.
+        for x, i in enumerate(arr):
+            # Get a normalized version of the value of the element, max is 255, min is 0
+            normal_i =  255 *float(i) / (HEIGHT / 2)
+            # Change the color of the visual according to the value of the element.
+            subs_color = (normal_i, 0, normal_i)
+            rect_color = substract_color(TILE_COLOR, subs_color)
+            if DISPLAY_BARS:
+                pygame.draw.rect(canvas, rect_color, (x * box_width, HEIGHT - i, box_width, i), 0)
+            else:
+                angle = x * rotational_speed
+                source_point = (WIDTH / 2, HEIGHT / 2)
+                length =  i 
+                dest_point = (WIDTH / 2 + math.sin(angle) * length, HEIGHT / 2 + math.cos(angle) * length)
+                pygame.draw.line(canvas, rect_color, source_point, dest_point)
+        pygame.display.flip()
     event_list = pygame.event.get()
     # This loop will check if the user wishes to quit the program.
     for event in event_list:
@@ -165,9 +231,11 @@ def main():
         This is the main function of the program. This program will use pygame to visuallize sorting 
         algorithms with big random data.
     '''
-    arr = initialize_array(ARR_COUNT, 1, HEIGHT)
+    global DISPLAY
+    arr = initialize_array(ARR_COUNT, 1, HEIGHT / 2)
+    quick_sort_update(canvas, arr)
+    DISPLAY = True # Toggle the flag that will tell the function to display the array on the screen.
     update_canvas(canvas, arr)
-    bubble_sort_update(canvas, arr)
     # After the array has been sorted, wait until the user wants to quit the program.
     while True:
         event_list = pygame.event.get()
